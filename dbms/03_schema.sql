@@ -28,3 +28,17 @@ CREATE TABLE financial_transaction (
     description TEXT,
     PRIMARY KEY (account_id, transaction_no)
 );
+
+ALTER TABLE category
+    ADD CONSTRAINT category_type_valid
+    CHECK (category_type IN ('income', 'expense'));
+
+ALTER TABLE financial_transaction
+    ADD CONSTRAINT transaction_no_positive CHECK (transaction_no > 0),
+    ADD CONSTRAINT transaction_type_valid
+        CHECK (transaction_type IN ('income', 'expense')),
+    ADD CONSTRAINT transaction_amount_positive CHECK (amount > 0);
+
+CREATE INDEX account_user_id_idx ON account(user_id);
+CREATE INDEX transaction_category_id_idx
+    ON financial_transaction(category_id);
