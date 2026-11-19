@@ -21,6 +21,12 @@ SET user_name = $2,
 WHERE user_id = $1
 RETURNING user_id, user_name, email;
 
+-- Delete a user who has no accounts. $1 = user_id.
+-- WRITE
+DELETE FROM app_user
+WHERE user_id = $1
+RETURNING user_id, user_name, email;
+
 -- List a user's accounts. $1 = user_id.
 -- READ
 SELECT a.account_id, a.account_name, u.user_id, u.user_name
@@ -75,6 +81,50 @@ RETURNING category_id, category_name, category_type;
 DELETE FROM category
 WHERE category_id = $1
 RETURNING category_id, category_name, category_type;
+
+-- Find one transaction. $1 = account_id, $2 = transaction_no.
+-- READ
+SELECT t.account_id, t.transaction_no, t.transaction_date,
+       t.transaction_type, t.amount, t.description,
+       c.category_id, c.category_name, c.category_type
+FROM financial_transaction AS t
+JOIN category AS c ON c.category_id = t.category_id
+WHERE t.account_id = $1
+  AND t.transaction_no = $2;
+
+-- Create a transaction.
+-- $1 = account_id, $2 = transaction_no, $3 = date, $4 = type,
+-- $5 = amount, $6 = category_id, $7 = optional description.
+-- WRITE
+INSERT INTO financial_transaction (
+    account_id, transaction_no, transaction_date,
+    transaction_type, amount, category_id, description
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING account_id, transaction_no, transaction_date,
+          transaction_type, amount, category_id, description;
+
+-- Update a transaction's details. $1 = account_id, $2 = transaction_no,
+-- $3 = date, $4 = type, $5 = amount, $6 = category_id, $7 = description.
+-- WRITE
+UPDATE financial_transaction
+SET transaction_date = $3,
+    transaction_type = $4,
+    amount = $5,
+    category_id = $6,
+    description = $7
+WHERE account_id = $1
+  AND transaction_no = $2
+RETURNING account_id, transaction_no, transaction_date,
+          transaction_type, amount, category_id, description;
+
+-- Delete a transaction. $1 = account_id, $2 = transaction_no.
+-- WRITE
+DELETE FROM financial_transaction
+WHERE account_id = $1
+  AND transaction_no = $2
+RETURNING account_id, transaction_no, transaction_date,
+          transaction_type, amount, category_id, description;
 
 -- List transactions for an account with category details.
 -- $1 = account_id; $2 = inclusive start date; $3 = inclusive end date.
