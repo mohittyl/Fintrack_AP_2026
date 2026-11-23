@@ -1,0 +1,19 @@
+## Query 08: Delete an account with no remaining transactions
+
+Type: WRITE; captured on Run 1.
+
+```text
+Delete on public.account  (cost=0.15..8.17 rows=1 width=6) (actual time=0.023..0.023 rows=1.00 loops=1)
+  Output: account_id, user_id, account_name
+  Buffers: shared hit=11
+  ->  Index Scan using account_pkey on public.account  (cost=0.15..8.17 rows=1 width=6) (actual time=0.006..0.007 rows=1.00 loops=1)
+        Output: ctid
+        Index Cond: (account.account_id = 3)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=78
+Planning Time: 0.131 ms
+Trigger RI_ConstraintTrigger_a_16439 for constraint financial_transaction_account_id_fkey: time=0.155 calls=1
+Execution Time: 0.215 ms
+```
