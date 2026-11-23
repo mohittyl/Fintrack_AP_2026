@@ -1,0 +1,24 @@
+## Query 13: Find one transaction
+
+Type: READ; captured on Run 1.
+
+```text
+Nested Loop  (cost=0.30..16.36 rows=1 width=168) (actual time=0.007..0.007 rows=1.00 loops=1)
+  Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, c.category_type
+  Inner Unique: true
+  Buffers: shared hit=7
+  ->  Index Scan using financial_transaction_pkey on public.financial_transaction t  (cost=0.15..8.17 rows=1 width=104) (actual time=0.005..0.005 rows=1.00 loops=1)
+        Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.category_id, t.description
+        Index Cond: ((t.account_id = 1) AND (t.transaction_no = 1))
+        Index Searches: 1
+        Buffers: shared hit=5
+  ->  Index Scan using category_pkey on public.category c  (cost=0.15..8.17 rows=1 width=72) (actual time=0.001..0.001 rows=1.00 loops=1)
+        Output: c.category_id, c.category_name, c.category_type
+        Index Cond: (c.category_id = t.category_id)
+        Index Searches: 1
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=228
+Planning Time: 0.228 ms
+Execution Time: 0.021 ms
+```
