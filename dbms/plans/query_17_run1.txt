@@ -1,0 +1,42 @@
+## Query 17: List transactions for an account with category details
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=27.67..27.68 rows=1 width=200) (actual time=0.035..0.036 rows=2.00 loops=1)
+  Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, c.category_type, a.account_name
+  Sort Key: t.transaction_date DESC, t.transaction_no DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=19
+  ->  Nested Loop  (cost=4.48..27.66 rows=1 width=200) (actual time=0.012..0.014 rows=2.00 loops=1)
+        Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, c.category_type, a.account_name
+        Inner Unique: true
+        Buffers: shared hit=13
+        ->  Nested Loop  (cost=4.33..19.48 rows=1 width=136) (actual time=0.009..0.010 rows=2.00 loops=1)
+              Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id, a.account_name
+              Buffers: shared hit=9
+              ->  Bitmap Heap Scan on public.financial_transaction t  (cost=4.17..11.30 rows=1 width=104) (actual time=0.007..0.007 rows=2.00 loops=1)
+                    Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.category_id, t.description
+                    Recheck Cond: (t.account_id = 1)
+                    Filter: ((t.transaction_date >= '2026-01-01'::date) AND (t.transaction_date <= '2026-12-31'::date))
+                    Heap Blocks: exact=1
+                    Buffers: shared hit=5
+                    ->  Bitmap Index Scan on financial_transaction_pkey  (cost=0.00..4.17 rows=3 width=0) (actual time=0.002..0.002 rows=3.00 loops=1)
+                          Index Cond: (t.account_id = 1)
+                          Index Searches: 1
+                          Buffers: shared hit=4
+              ->  Index Scan using account_pkey on public.account a  (cost=0.15..8.17 rows=1 width=40) (actual time=0.001..0.001 rows=1.00 loops=2)
+                    Output: a.account_id, a.user_id, a.account_name
+                    Index Cond: (a.account_id = 1)
+                    Index Searches: 2
+                    Buffers: shared hit=4
+        ->  Index Scan using category_pkey on public.category c  (cost=0.15..8.17 rows=1 width=72) (actual time=0.001..0.001 rows=1.00 loops=2)
+              Output: c.category_id, c.category_name, c.category_type
+              Index Cond: (c.category_id = t.category_id)
+              Index Searches: 2
+              Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=270
+Planning Time: 0.314 ms
+Execution Time: 0.058 ms
+```
