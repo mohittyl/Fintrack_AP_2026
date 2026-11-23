@@ -1,0 +1,18 @@
+## Query 15: Update a transaction's details
+
+Type: WRITE; captured on Run 1.
+
+```text
+Update on public.financial_transaction  (cost=0.15..8.17 rows=1 width=98) (actual time=0.045..0.045 rows=1.00 loops=1)
+  Output: account_id, transaction_no, transaction_date, transaction_type, amount, category_id, description
+  Buffers: shared hit=28
+  ->  Index Scan using financial_transaction_pkey on public.financial_transaction  (cost=0.15..8.17 rows=1 width=98) (actual time=0.007..0.007 rows=1.00 loops=1)
+        Output: '2026-01-11'::date, 'expense'::text, 45.67::numeric(12,2), '1'::bigint, 'Updated sample transaction'::text, ctid
+        Index Cond: ((financial_transaction.account_id = 1) AND (financial_transaction.transaction_no = 1))
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=106
+Planning Time: 0.134 ms
+Execution Time: 0.078 ms
+```
