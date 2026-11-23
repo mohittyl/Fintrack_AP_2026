@@ -1,0 +1,16 @@
+## Query 10: Create a category
+
+Type: WRITE; captured on Run 1.
+
+```text
+Insert on public.category  (cost=0.00..0.01 rows=1 width=72) (actual time=0.076..0.076 rows=1.00 loops=1)
+  Output: category.category_id, category.category_name, category.category_type
+  Buffers: shared hit=48
+  ->  Result  (cost=0.00..0.01 rows=1 width=72) (actual time=0.015..0.015 rows=1.00 loops=1)
+        Output: nextval('category_category_id_seq'), 'Benchmark Category'::text, 'income'::text
+        Buffers: shared hit=12
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.020 ms
+Execution Time: 0.088 ms
+```
