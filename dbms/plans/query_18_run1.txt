@@ -1,0 +1,46 @@
+## Query 18: List all transactions belonging to a user across their accounts
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=38.91..38.91 rows=1 width=176) (actual time=0.031..0.032 rows=3.00 loops=1)
+  Output: t.account_id, a.account_name, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, a.account_id
+  Sort Key: t.transaction_date DESC, t.account_id, t.transaction_no DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=21
+  ->  Nested Loop  (cost=4.34..38.90 rows=1 width=176) (actual time=0.019..0.022 rows=3.00 loops=1)
+        Output: t.account_id, a.account_name, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, a.account_id
+        Inner Unique: true
+        Buffers: shared hit=12
+        ->  Nested Loop  (cost=4.19..32.05 rows=1 width=144) (actual time=0.018..0.020 rows=3.00 loops=1)
+              Output: a.account_name, a.account_id, t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id
+              Join Filter: (a.account_id = t.account_id)
+              Rows Removed by Join Filter: 3
+              Buffers: shared hit=6
+              ->  Bitmap Heap Scan on public.account a  (cost=4.19..12.66 rows=5 width=40) (actual time=0.005..0.006 rows=2.00 loops=1)
+                    Output: a.account_id, a.user_id, a.account_name
+                    Recheck Cond: (a.user_id = 1)
+                    Heap Blocks: exact=1
+                    Buffers: shared hit=5
+                    ->  Bitmap Index Scan on account_user_id_idx  (cost=0.00..4.19 rows=5 width=0) (actual time=0.002..0.002 rows=8.00 loops=1)
+                          Index Cond: (a.user_id = 1)
+                          Index Searches: 1
+                          Buffers: shared hit=4
+              ->  Materialize  (cost=0.00..19.16 rows=3 width=104) (actual time=0.006..0.006 rows=3.00 loops=2)
+                    Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id
+                    Storage: Memory  Maximum Storage: 17kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on public.financial_transaction t  (cost=0.00..19.15 rows=3 width=104) (actual time=0.010..0.010 rows=3.00 loops=1)
+                          Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id
+                          Filter: ((t.transaction_date >= '2026-01-01'::date) AND (t.transaction_date <= '2026-12-31'::date))
+                          Buffers: shared hit=1
+        ->  Index Scan using category_pkey on public.category c  (cost=0.15..6.83 rows=1 width=40) (actual time=0.000..0.000 rows=1.00 loops=3)
+              Output: c.category_id, c.category_name, c.category_type
+              Index Cond: (c.category_id = t.category_id)
+              Index Searches: 3
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=198
+Planning Time: 0.266 ms
+Execution Time: 0.053 ms
+```
