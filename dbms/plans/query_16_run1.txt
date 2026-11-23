@@ -1,0 +1,18 @@
+## Query 16: Delete a transaction
+
+Type: WRITE; captured on Run 1.
+
+```text
+Delete on public.financial_transaction  (cost=0.15..8.17 rows=1 width=6) (actual time=0.014..0.014 rows=1.00 loops=1)
+  Output: account_id, transaction_no, transaction_date, transaction_type, amount, category_id, description
+  Buffers: shared hit=7
+  ->  Index Scan using financial_transaction_pkey on public.financial_transaction  (cost=0.15..8.17 rows=1 width=6) (actual time=0.006..0.006 rows=1.00 loops=1)
+        Output: ctid
+        Index Cond: ((financial_transaction.account_id = 1) AND (financial_transaction.transaction_no = 2))
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=108
+Planning Time: 0.133 ms
+Execution Time: 0.047 ms
+```
