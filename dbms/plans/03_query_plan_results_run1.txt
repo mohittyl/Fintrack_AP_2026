@@ -1,0 +1,409 @@
+Fintrack query plan captures
+PostgreSQL 18.4 (Postgres.app); Run 1 for each of the 18 statements in dbms/04_queries.sql.
+Every captured statement ran inside a transaction and was rolled back.
+
+## Query 01: Create a user
+
+Type: WRITE; captured on Run 1.
+
+```text
+Insert on public.app_user  (cost=0.00..0.01 rows=1 width=72) (actual time=0.176..0.177 rows=1.00 loops=1)
+  Output: app_user.user_id, app_user.user_name, app_user.email
+  Buffers: shared hit=65
+  ->  Result  (cost=0.00..0.01 rows=1 width=72) (actual time=0.020..0.020 rows=1.00 loops=1)
+        Output: nextval('app_user_user_id_seq'), 'Benchmark User'::text, 'benchmark-user@example.test'::text
+        Buffers: shared hit=12
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.021 ms
+Execution Time: 0.190 ms
+```
+
+## Query 02: Find a user by email, for sign-in or duplicate checking
+
+Type: READ; captured on Run 1.
+
+```text
+Index Scan using app_user_email_key on public.app_user  (cost=0.15..8.17 rows=1 width=72) (actual time=0.003..0.003 rows=1.00 loops=1)
+  Output: user_id, user_name, email
+  Index Cond: (app_user.email = 'query-test@example.test'::text)
+  Index Searches: 1
+  Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=84
+Planning Time: 0.146 ms
+Execution Time: 0.015 ms
+```
+
+## Query 03: Update a user's profile
+
+Type: WRITE; captured on Run 1.
+
+```text
+Update on public.app_user  (cost=0.15..8.17 rows=1 width=70) (actual time=0.038..0.038 rows=1.00 loops=1)
+  Output: user_id, user_name, email
+  Buffers: shared hit=15
+  ->  Index Scan using app_user_pkey on public.app_user  (cost=0.15..8.17 rows=1 width=70) (actual time=0.009..0.009 rows=1.00 loops=1)
+        Output: 'Renamed Test User'::text, 'query-test-updated@example.test'::text, ctid
+        Index Cond: (app_user.user_id = 1)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=84
+Planning Time: 0.116 ms
+Execution Time: 0.240 ms
+```
+
+## Query 04: Delete a user who has no accounts
+
+Type: WRITE; captured on Run 1.
+
+```text
+Delete on public.app_user  (cost=0.15..8.17 rows=1 width=6) (actual time=0.023..0.023 rows=1.00 loops=1)
+  Output: user_id, user_name, email
+  Buffers: shared hit=11
+  ->  Index Scan using app_user_pkey on public.app_user  (cost=0.15..8.17 rows=1 width=6) (actual time=0.006..0.006 rows=1.00 loops=1)
+        Output: ctid
+        Index Cond: (app_user.user_id = 3)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=84
+Planning Time: 0.116 ms
+Trigger RI_ConstraintTrigger_a_16410 for constraint account_user_id_fkey: time=0.153 calls=1
+Execution Time: 0.211 ms
+```
+
+## Query 05: List a user's accounts
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=20.94..20.95 rows=5 width=80) (actual time=0.020..0.020 rows=2.00 loops=1)
+  Output: a.account_id, a.account_name, u.user_id, u.user_name
+  Sort Key: a.account_id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=11
+  ->  Nested Loop  (cost=4.34..20.88 rows=5 width=80) (actual time=0.010..0.012 rows=2.00 loops=1)
+        Output: a.account_id, a.account_name, u.user_id, u.user_name
+        Buffers: shared hit=8
+        ->  Index Scan using app_user_pkey on public.app_user u  (cost=0.15..8.17 rows=1 width=40) (actual time=0.006..0.007 rows=1.00 loops=1)
+              Output: u.user_id, u.user_name, u.email
+              Index Cond: (u.user_id = 1)
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Bitmap Heap Scan on public.account a  (cost=4.19..12.66 rows=5 width=48) (actual time=0.003..0.003 rows=2.00 loops=1)
+              Output: a.account_id, a.user_id, a.account_name
+              Recheck Cond: (a.user_id = 1)
+              Heap Blocks: exact=1
+              Buffers: shared hit=2
+              ->  Bitmap Index Scan on account_user_id_idx  (cost=0.00..4.19 rows=5 width=0) (actual time=0.001..0.001 rows=5.00 loops=1)
+                    Index Cond: (a.user_id = 1)
+                    Index Searches: 1
+                    Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=148
+Planning Time: 0.183 ms
+Execution Time: 0.037 ms
+```
+
+## Query 06: Create an account for a user
+
+Type: WRITE; captured on Run 1.
+
+```text
+Insert on public.account  (cost=0.00..0.01 rows=1 width=48) (actual time=0.061..0.061 rows=1.00 loops=1)
+  Output: account.account_id, account.user_id, account.account_name
+  Buffers: shared hit=58
+  ->  Result  (cost=0.00..0.01 rows=1 width=48) (actual time=0.014..0.014 rows=1.00 loops=1)
+        Output: nextval('account_account_id_seq'), '1'::bigint, 'Benchmark Account'::text
+        Buffers: shared hit=12
+Planning Time: 0.026 ms
+Trigger RI_ConstraintTrigger_c_16412 for constraint account_user_id_fkey: time=0.145 calls=1
+Execution Time: 0.215 ms
+```
+
+## Query 07: Rename an account
+
+Type: WRITE; captured on Run 1.
+
+```text
+Update on public.account  (cost=0.15..8.17 rows=1 width=38) (actual time=0.041..0.042 rows=1.00 loops=1)
+  Output: account_id, user_id, account_name
+  Buffers: shared hit=16
+  ->  Index Scan using account_pkey on public.account  (cost=0.15..8.17 rows=1 width=38) (actual time=0.009..0.009 rows=1.00 loops=1)
+        Output: 'Renamed Savings Account'::text, ctid
+        Index Cond: (account.account_id = 2)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=78
+Planning Time: 0.168 ms
+Execution Time: 0.091 ms
+```
+
+## Query 08: Delete an account with no remaining transactions
+
+Type: WRITE; captured on Run 1.
+
+```text
+Delete on public.account  (cost=0.15..8.17 rows=1 width=6) (actual time=0.023..0.023 rows=1.00 loops=1)
+  Output: account_id, user_id, account_name
+  Buffers: shared hit=11
+  ->  Index Scan using account_pkey on public.account  (cost=0.15..8.17 rows=1 width=6) (actual time=0.006..0.007 rows=1.00 loops=1)
+        Output: ctid
+        Index Cond: (account.account_id = 3)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=78
+Planning Time: 0.131 ms
+Trigger RI_ConstraintTrigger_a_16439 for constraint financial_transaction_account_id_fkey: time=0.155 calls=1
+Execution Time: 0.215 ms
+```
+
+## Query 09: List categories, optionally limited to a transaction type
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=20.16..20.18 rows=4 width=72) (actual time=0.011..0.011 rows=2.00 loops=1)
+  Output: category_id, category_name, category_type
+  Sort Key: category.category_name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4
+  ->  Seq Scan on public.category  (cost=0.00..20.12 rows=4 width=72) (actual time=0.003..0.003 rows=2.00 loops=1)
+        Output: category_id, category_name, category_type
+        Filter: (category.category_type = 'expense'::text)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=85
+Planning Time: 0.099 ms
+Execution Time: 0.021 ms
+```
+
+## Query 10: Create a category
+
+Type: WRITE; captured on Run 1.
+
+```text
+Insert on public.category  (cost=0.00..0.01 rows=1 width=72) (actual time=0.076..0.076 rows=1.00 loops=1)
+  Output: category.category_id, category.category_name, category.category_type
+  Buffers: shared hit=48
+  ->  Result  (cost=0.00..0.01 rows=1 width=72) (actual time=0.015..0.015 rows=1.00 loops=1)
+        Output: nextval('category_category_id_seq'), 'Benchmark Category'::text, 'income'::text
+        Buffers: shared hit=12
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.020 ms
+Execution Time: 0.088 ms
+```
+
+## Query 11: Update a category
+
+Type: WRITE; captured on Run 1.
+
+```text
+Update on public.category  (cost=0.15..8.17 rows=1 width=70) (actual time=0.039..0.039 rows=1.00 loops=1)
+  Output: category_id, category_name, category_type
+  Buffers: shared hit=14
+  ->  Index Scan using category_pkey on public.category  (cost=0.15..8.17 rows=1 width=70) (actual time=0.007..0.007 rows=1.00 loops=1)
+        Output: 'Renamed Unused Category'::text, 'expense'::text, ctid
+        Index Cond: (category.category_id = 3)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=66
+Planning Time: 0.105 ms
+Execution Time: 0.077 ms
+```
+
+## Query 12: Delete a category when no transactions reference it
+
+Type: WRITE; captured on Run 1.
+
+```text
+Delete on public.category  (cost=0.15..8.17 rows=1 width=6) (actual time=0.025..0.026 rows=1.00 loops=1)
+  Output: category_id, category_name, category_type
+  Buffers: shared hit=11
+  ->  Index Scan using category_pkey on public.category  (cost=0.15..8.17 rows=1 width=6) (actual time=0.007..0.007 rows=1.00 loops=1)
+        Output: ctid
+        Index Cond: (category.category_id = 3)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=66
+Planning Time: 0.089 ms
+Trigger RI_ConstraintTrigger_a_16444 for constraint financial_transaction_category_id_fkey: time=0.150 calls=1
+Execution Time: 0.206 ms
+```
+
+## Query 13: Find one transaction
+
+Type: READ; captured on Run 1.
+
+```text
+Nested Loop  (cost=0.30..16.36 rows=1 width=168) (actual time=0.007..0.007 rows=1.00 loops=1)
+  Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, c.category_type
+  Inner Unique: true
+  Buffers: shared hit=7
+  ->  Index Scan using financial_transaction_pkey on public.financial_transaction t  (cost=0.15..8.17 rows=1 width=104) (actual time=0.005..0.005 rows=1.00 loops=1)
+        Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.category_id, t.description
+        Index Cond: ((t.account_id = 1) AND (t.transaction_no = 1))
+        Index Searches: 1
+        Buffers: shared hit=5
+  ->  Index Scan using category_pkey on public.category c  (cost=0.15..8.17 rows=1 width=72) (actual time=0.001..0.001 rows=1.00 loops=1)
+        Output: c.category_id, c.category_name, c.category_type
+        Index Cond: (c.category_id = t.category_id)
+        Index Searches: 1
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=228
+Planning Time: 0.228 ms
+Execution Time: 0.021 ms
+```
+
+## Query 14: Create a transaction
+
+Type: WRITE; captured on Run 1.
+
+```text
+Insert on public.financial_transaction  (cost=0.00..0.01 rows=1 width=104) (actual time=0.081..0.081 rows=1.00 loops=1)
+  Output: financial_transaction.account_id, financial_transaction.transaction_no, financial_transaction.transaction_date, financial_transaction.transaction_type, financial_transaction.amount, financial_transaction.category_id, financial_transaction.description
+  Buffers: shared hit=67
+  ->  Result  (cost=0.00..0.01 rows=1 width=104) (actual time=0.002..0.002 rows=1.00 loops=1)
+        Output: '1'::bigint, 99, '2026-03-01'::date, 'expense'::text, 12.34::numeric(12,2), '1'::bigint, 'Benchmark transaction'::text
+Planning Time: 0.029 ms
+Trigger RI_ConstraintTrigger_c_16441 for constraint financial_transaction_account_id_fkey: time=0.179 calls=1
+Trigger RI_ConstraintTrigger_c_16446 for constraint financial_transaction_category_id_fkey: time=0.071 calls=1
+Execution Time: 0.340 ms
+```
+
+## Query 15: Update a transaction's details
+
+Type: WRITE; captured on Run 1.
+
+```text
+Update on public.financial_transaction  (cost=0.15..8.17 rows=1 width=98) (actual time=0.045..0.045 rows=1.00 loops=1)
+  Output: account_id, transaction_no, transaction_date, transaction_type, amount, category_id, description
+  Buffers: shared hit=28
+  ->  Index Scan using financial_transaction_pkey on public.financial_transaction  (cost=0.15..8.17 rows=1 width=98) (actual time=0.007..0.007 rows=1.00 loops=1)
+        Output: '2026-01-11'::date, 'expense'::text, 45.67::numeric(12,2), '1'::bigint, 'Updated sample transaction'::text, ctid
+        Index Cond: ((financial_transaction.account_id = 1) AND (financial_transaction.transaction_no = 1))
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=106
+Planning Time: 0.134 ms
+Execution Time: 0.078 ms
+```
+
+## Query 16: Delete a transaction
+
+Type: WRITE; captured on Run 1.
+
+```text
+Delete on public.financial_transaction  (cost=0.15..8.17 rows=1 width=6) (actual time=0.014..0.014 rows=1.00 loops=1)
+  Output: account_id, transaction_no, transaction_date, transaction_type, amount, category_id, description
+  Buffers: shared hit=7
+  ->  Index Scan using financial_transaction_pkey on public.financial_transaction  (cost=0.15..8.17 rows=1 width=6) (actual time=0.006..0.006 rows=1.00 loops=1)
+        Output: ctid
+        Index Cond: ((financial_transaction.account_id = 1) AND (financial_transaction.transaction_no = 2))
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=108
+Planning Time: 0.133 ms
+Execution Time: 0.047 ms
+```
+
+## Query 17: List transactions for an account with category details
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=27.67..27.68 rows=1 width=200) (actual time=0.035..0.036 rows=2.00 loops=1)
+  Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, c.category_type, a.account_name
+  Sort Key: t.transaction_date DESC, t.transaction_no DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=19
+  ->  Nested Loop  (cost=4.48..27.66 rows=1 width=200) (actual time=0.012..0.014 rows=2.00 loops=1)
+        Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, c.category_type, a.account_name
+        Inner Unique: true
+        Buffers: shared hit=13
+        ->  Nested Loop  (cost=4.33..19.48 rows=1 width=136) (actual time=0.009..0.010 rows=2.00 loops=1)
+              Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id, a.account_name
+              Buffers: shared hit=9
+              ->  Bitmap Heap Scan on public.financial_transaction t  (cost=4.17..11.30 rows=1 width=104) (actual time=0.007..0.007 rows=2.00 loops=1)
+                    Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.category_id, t.description
+                    Recheck Cond: (t.account_id = 1)
+                    Filter: ((t.transaction_date >= '2026-01-01'::date) AND (t.transaction_date <= '2026-12-31'::date))
+                    Heap Blocks: exact=1
+                    Buffers: shared hit=5
+                    ->  Bitmap Index Scan on financial_transaction_pkey  (cost=0.00..4.17 rows=3 width=0) (actual time=0.002..0.002 rows=3.00 loops=1)
+                          Index Cond: (t.account_id = 1)
+                          Index Searches: 1
+                          Buffers: shared hit=4
+              ->  Index Scan using account_pkey on public.account a  (cost=0.15..8.17 rows=1 width=40) (actual time=0.001..0.001 rows=1.00 loops=2)
+                    Output: a.account_id, a.user_id, a.account_name
+                    Index Cond: (a.account_id = 1)
+                    Index Searches: 2
+                    Buffers: shared hit=4
+        ->  Index Scan using category_pkey on public.category c  (cost=0.15..8.17 rows=1 width=72) (actual time=0.001..0.001 rows=1.00 loops=2)
+              Output: c.category_id, c.category_name, c.category_type
+              Index Cond: (c.category_id = t.category_id)
+              Index Searches: 2
+              Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=270
+Planning Time: 0.314 ms
+Execution Time: 0.058 ms
+```
+
+## Query 18: List all transactions belonging to a user across their accounts
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=38.91..38.91 rows=1 width=176) (actual time=0.031..0.032 rows=3.00 loops=1)
+  Output: t.account_id, a.account_name, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, a.account_id
+  Sort Key: t.transaction_date DESC, t.account_id, t.transaction_no DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=21
+  ->  Nested Loop  (cost=4.34..38.90 rows=1 width=176) (actual time=0.019..0.022 rows=3.00 loops=1)
+        Output: t.account_id, a.account_name, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, c.category_id, c.category_name, a.account_id
+        Inner Unique: true
+        Buffers: shared hit=12
+        ->  Nested Loop  (cost=4.19..32.05 rows=1 width=144) (actual time=0.018..0.020 rows=3.00 loops=1)
+              Output: a.account_name, a.account_id, t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id
+              Join Filter: (a.account_id = t.account_id)
+              Rows Removed by Join Filter: 3
+              Buffers: shared hit=6
+              ->  Bitmap Heap Scan on public.account a  (cost=4.19..12.66 rows=5 width=40) (actual time=0.005..0.006 rows=2.00 loops=1)
+                    Output: a.account_id, a.user_id, a.account_name
+                    Recheck Cond: (a.user_id = 1)
+                    Heap Blocks: exact=1
+                    Buffers: shared hit=5
+                    ->  Bitmap Index Scan on account_user_id_idx  (cost=0.00..4.19 rows=5 width=0) (actual time=0.002..0.002 rows=8.00 loops=1)
+                          Index Cond: (a.user_id = 1)
+                          Index Searches: 1
+                          Buffers: shared hit=4
+              ->  Materialize  (cost=0.00..19.16 rows=3 width=104) (actual time=0.006..0.006 rows=3.00 loops=2)
+                    Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id
+                    Storage: Memory  Maximum Storage: 17kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on public.financial_transaction t  (cost=0.00..19.15 rows=3 width=104) (actual time=0.010..0.010 rows=3.00 loops=1)
+                          Output: t.account_id, t.transaction_no, t.transaction_date, t.transaction_type, t.amount, t.description, t.category_id
+                          Filter: ((t.transaction_date >= '2026-01-01'::date) AND (t.transaction_date <= '2026-12-31'::date))
+                          Buffers: shared hit=1
+        ->  Index Scan using category_pkey on public.category c  (cost=0.15..6.83 rows=1 width=40) (actual time=0.000..0.000 rows=1.00 loops=3)
+              Output: c.category_id, c.category_name, c.category_type
+              Index Cond: (c.category_id = t.category_id)
+              Index Searches: 3
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=198
+Planning Time: 0.266 ms
+Execution Time: 0.053 ms
+```
