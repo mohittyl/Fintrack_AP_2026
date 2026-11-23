@@ -1,0 +1,15 @@
+## Query 14: Create a transaction
+
+Type: WRITE; captured on Run 1.
+
+```text
+Insert on public.financial_transaction  (cost=0.00..0.01 rows=1 width=104) (actual time=0.081..0.081 rows=1.00 loops=1)
+  Output: financial_transaction.account_id, financial_transaction.transaction_no, financial_transaction.transaction_date, financial_transaction.transaction_type, financial_transaction.amount, financial_transaction.category_id, financial_transaction.description
+  Buffers: shared hit=67
+  ->  Result  (cost=0.00..0.01 rows=1 width=104) (actual time=0.002..0.002 rows=1.00 loops=1)
+        Output: '1'::bigint, 99, '2026-03-01'::date, 'expense'::text, 12.34::numeric(12,2), '1'::bigint, 'Benchmark transaction'::text
+Planning Time: 0.029 ms
+Trigger RI_ConstraintTrigger_c_16441 for constraint financial_transaction_account_id_fkey: time=0.179 calls=1
+Trigger RI_ConstraintTrigger_c_16446 for constraint financial_transaction_category_id_fkey: time=0.071 calls=1
+Execution Time: 0.340 ms
+```
