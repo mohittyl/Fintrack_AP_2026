@@ -1,0 +1,15 @@
+## Query 06: Create an account for a user
+
+Type: WRITE; captured on Run 1.
+
+```text
+Insert on public.account  (cost=0.00..0.01 rows=1 width=48) (actual time=0.061..0.061 rows=1.00 loops=1)
+  Output: account.account_id, account.user_id, account.account_name
+  Buffers: shared hit=58
+  ->  Result  (cost=0.00..0.01 rows=1 width=48) (actual time=0.014..0.014 rows=1.00 loops=1)
+        Output: nextval('account_account_id_seq'), '1'::bigint, 'Benchmark Account'::text
+        Buffers: shared hit=12
+Planning Time: 0.026 ms
+Trigger RI_ConstraintTrigger_c_16412 for constraint account_user_id_fkey: time=0.145 calls=1
+Execution Time: 0.215 ms
+```
