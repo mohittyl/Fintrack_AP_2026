@@ -1,0 +1,20 @@
+## Query 09: List categories, optionally limited to a transaction type
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=20.16..20.18 rows=4 width=72) (actual time=0.011..0.011 rows=2.00 loops=1)
+  Output: category_id, category_name, category_type
+  Sort Key: category.category_name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4
+  ->  Seq Scan on public.category  (cost=0.00..20.12 rows=4 width=72) (actual time=0.003..0.003 rows=2.00 loops=1)
+        Output: category_id, category_name, category_type
+        Filter: (category.category_type = 'expense'::text)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=85
+Planning Time: 0.099 ms
+Execution Time: 0.021 ms
+```
