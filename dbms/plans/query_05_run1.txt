@@ -1,0 +1,32 @@
+## Query 05: List a user's accounts
+
+Type: READ; captured on Run 1.
+
+```text
+Sort  (cost=20.94..20.95 rows=5 width=80) (actual time=0.020..0.020 rows=2.00 loops=1)
+  Output: a.account_id, a.account_name, u.user_id, u.user_name
+  Sort Key: a.account_id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=11
+  ->  Nested Loop  (cost=4.34..20.88 rows=5 width=80) (actual time=0.010..0.012 rows=2.00 loops=1)
+        Output: a.account_id, a.account_name, u.user_id, u.user_name
+        Buffers: shared hit=8
+        ->  Index Scan using app_user_pkey on public.app_user u  (cost=0.15..8.17 rows=1 width=40) (actual time=0.006..0.007 rows=1.00 loops=1)
+              Output: u.user_id, u.user_name, u.email
+              Index Cond: (u.user_id = 1)
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Bitmap Heap Scan on public.account a  (cost=4.19..12.66 rows=5 width=48) (actual time=0.003..0.003 rows=2.00 loops=1)
+              Output: a.account_id, a.user_id, a.account_name
+              Recheck Cond: (a.user_id = 1)
+              Heap Blocks: exact=1
+              Buffers: shared hit=2
+              ->  Bitmap Index Scan on account_user_id_idx  (cost=0.00..4.19 rows=5 width=0) (actual time=0.001..0.001 rows=5.00 loops=1)
+                    Index Cond: (a.user_id = 1)
+                    Index Searches: 1
+                    Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=148
+Planning Time: 0.183 ms
+Execution Time: 0.037 ms
+```
