@@ -1,0 +1,18 @@
+## Query 03: Update a user's profile
+
+Type: WRITE; captured on Run 1.
+
+```text
+Update on public.app_user  (cost=0.15..8.17 rows=1 width=70) (actual time=0.038..0.038 rows=1.00 loops=1)
+  Output: user_id, user_name, email
+  Buffers: shared hit=15
+  ->  Index Scan using app_user_pkey on public.app_user  (cost=0.15..8.17 rows=1 width=70) (actual time=0.009..0.009 rows=1.00 loops=1)
+        Output: 'Renamed Test User'::text, 'query-test-updated@example.test'::text, ctid
+        Index Cond: (app_user.user_id = 1)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=84
+Planning Time: 0.116 ms
+Execution Time: 0.240 ms
+```
